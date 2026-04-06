@@ -23,6 +23,30 @@
 
         <div class="header-right ms-auto">
             <div class="d-flex align-items-center">
+                <div class="dropdown nxl-h-item">
+                    <a href="javascript:void(0);" class="nxl-head-link position-relative" data-bs-toggle="dropdown" role="button" data-bs-auto-close="outside">
+                        <i class="feather-bell"></i>
+                        @if($unreadNotificationCount > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ $unreadNotificationCount }}</span>
+                        @endif
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end nxl-h-dropdown notification-dropdown" style="width: min(360px, calc(100vw - 24px));">
+                        <div class="dropdown-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Notifikasi</h6>
+                            <span class="fs-12 text-muted">{{ $unreadNotificationCount }} belum dibaca</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        @forelse($headerNotifications as $notification)
+                        <a href="{{ route('notifications.visit', $notification->id) }}" class="dropdown-item py-3 notification-item" style="display: block; white-space: normal;">
+                            <div class="fw-semibold text-dark notification-text" style="display: block; white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.45;">{{ $notification->data['title'] ?? 'Notifikasi' }}</div>
+                            <div class="fs-12 text-muted mt-1 notification-text" style="display: block; white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.45;">{{ $notification->data['message'] ?? '-' }}</div>
+                            <div class="fs-11 text-muted mt-1">{{ $notification->created_at?->diffForHumans() }}</div>
+                        </a>
+                        @empty
+                        <div class="px-3 py-4 text-center text-muted fs-12">Belum ada notifikasi baru.</div>
+                        @endforelse
+                    </div>
+                </div>
                 <div class="nxl-h-item d-none d-sm-flex">
                     <div class="full-screen-switcher">
                         <a href="javascript:void(0);" class="nxl-head-link me-0" onclick="$ ('body').fullScreenHelper('toggle');">

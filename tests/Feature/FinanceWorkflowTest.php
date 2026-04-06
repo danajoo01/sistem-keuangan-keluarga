@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Providers\AppServiceProvider;
+use App\Models\MailSetting;
 use App\Models\UangKeluar;
 use App\Models\UangMasuk;
 use App\Support\AttachmentUrl;
@@ -30,6 +31,11 @@ class FinanceWorkflowTest extends TestCase
 
     public function test_user_can_submit_pengajuan_dana_with_pending_status(): void
     {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+
         $user = User::factory()->create([
             'role' => 'user',
             'status' => 'active',
@@ -49,6 +55,11 @@ class FinanceWorkflowTest extends TestCase
             'status' => 'pending',
             'deskripsi' => 'Pengajuan dana belanja bulanan',
         ]);
+
+        $admin->refresh();
+
+        $this->assertCount(1, $admin->notifications);
+        $this->assertSame('Pengajuan dana baru', $admin->notifications->first()->data['title']);
     }
 
     public function test_user_can_submit_pengeluaran_with_pending_status_and_bukti(): void
@@ -109,6 +120,71 @@ class FinanceWorkflowTest extends TestCase
             'approval_note' => 'Disetujui.',
             'approved_by' => $admin->id,
         ]);
+
+        $requester->refresh();
+
+        $this->assertCount(1, $requester->notifications);
+        $this->assertSame('Status pengajuan dana diperbarui', $requester->notifications->first()->data['title']);
+    }
+
+    public function test_notification_is_marked_as_read_when_opened(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+
+        $user = User::factory()->create([
+            'role' => 'user',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)->post(route('keuangan.pengajuan-dana.store'), [
+            'jumlah' => 210000,
+            'deskripsi' => 'Pengajuan kebutuhan sekolah',
+            'tanggal' => '2026-04-06',
+        ]);
+
+        $income = UangMasuk::query()->latest('id')->firstOrFail();
+        $notification = $admin->fresh()->notifications()->firstOrFail();
+
+        $response = $this->actingAs($admin)->get(route('notifications.visit', $notification->id));
+
+        $response->assertRedirect(route('keuangan.approval-pengajuan.show', $income));
+        $this->assertNotNull($notification->fresh()->read_at);
+    }
+
+    public function test_admin_can_update_mail_configuration(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($admin)->patch(route('master-data.config-mail.update'), [
+            'mailer' => 'smtp',
+            'host' => 'smtp.mailtrap.io',
+            'port' => 2525,
+            'username' => 'mailer-user',
+            'password' => 'mailer-secret',
+            'encryption' => 'tls',
+            'from_address' => 'noreply@example.com',
+            'from_name' => 'Keuangan Keluarga',
+        ]);
+
+        $response->assertRedirect(route('master-data.config-mail.edit'));
+
+        $this->assertDatabaseHas('mail_settings', [
+            'mailer' => 'smtp',
+            'host' => 'smtp.mailtrap.io',
+            'port' => 2525,
+            'username' => 'mailer-user',
+            'encryption' => 'tls',
+            'from_address' => 'noreply@example.com',
+            'from_name' => 'Keuangan Keluarga',
+        ]);
+
+        $this->assertTrue(MailSetting::query()->firstOrFail()->isConfigured());
     }
 
     public function test_user_can_edit_and_delete_pending_pengajuan_dana(): void

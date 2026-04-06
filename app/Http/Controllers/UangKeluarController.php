@@ -6,6 +6,8 @@ use App\Http\Requests\StoreUangKeluarRequest;
 use App\Http\Requests\UpdateUangKeluarRequest;
 use App\Models\UangKeluar;
 use App\Support\AttachmentUrl;
+use App\Support\FinanceNotifier;
+use App\Support\MailConfiguration;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -54,6 +56,8 @@ class UangKeluarController extends Controller
             'status' => 'pending',
         ]);
 
+        FinanceNotifier::notifyAdminsForExpense($expense, $request->boolean('send_email'));
+
         return redirect()
             ->route('keuangan.pengeluaran.show', $expense)
             ->with('success', 'Data pengeluaran berhasil disimpan dan menunggu approval.');
@@ -73,6 +77,8 @@ class UangKeluarController extends Controller
                 'approval_note' => $validated['approval_note'] ?? null,
                 'approved_by' => $request->user()->id,
             ]);
+
+            FinanceNotifier::notifyUserForExpenseStatus($expense->fresh(['creator']), $request->boolean('send_email'));
 
             return redirect()
                 ->route('keuangan.approval-pengeluaran.show', ['expense' => $expense, 'mode' => 'view'])
@@ -183,6 +189,10 @@ class UangKeluarController extends Controller
             'canCreate' => $context === 'user',
             'canEditRecord' => $expense ? $this->canEdit($request, $expense, $context) : false,
             'canDelete' => $expense ? $this->canDelete($request, $expense, $context) : false,
+            'mailAvailable' => MailConfiguration::isConfigured(),
+            'showSendEmailOption' => MailConfiguration::isConfigured()
+                && (($context === 'user' && $mode === 'create')
+                    || ($context === 'approval' && $expense && $mode === 'edit')),
         ]);
     }
 

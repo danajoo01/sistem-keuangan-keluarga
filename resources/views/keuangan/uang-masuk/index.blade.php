@@ -196,6 +196,20 @@ $statusBadgeMap = [
                                 <input type="text" value="{{ ucfirst($selectedIncome->status) }}" class="form-control" disabled>
                             </div>
                             @endif
+
+                            @if($showSendEmailOption)
+                            <div class="col-12">
+                                <div class="alert alert-light border mb-0">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="send_email" name="send_email" @checked(old('send_email'))>
+                                        <label class="form-check-label fw-semibold" for="send_email">
+                                            Kirim notifikasi email
+                                        </label>
+                                    </div>
+                                    <div class="fs-12 text-muted mt-2">Jika ingin mailing pastikan user email aktif agar ada notifikasi email.</div>
+                                </div>
+                            </div>
+                            @endif
                         </div>
 
                         <div class="mt-4 d-flex justify-content-between align-items-center gap-2 flex-wrap">

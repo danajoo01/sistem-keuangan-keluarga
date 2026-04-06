@@ -23,6 +23,7 @@ class MenuListSeeder extends Seeder
             ['name' => 'Approval Pengajuan', 'key' => 'approval-pengajuan', 'sort_order' => 8],
             ['name' => 'Data Pengeluaran', 'key' => 'data-pengeluaran', 'sort_order' => 9],
             ['name' => 'Approval Pengeluaran', 'key' => 'approval-pengeluaran', 'sort_order' => 10],
+            ['name' => 'Config Mail', 'key' => 'config-mail', 'sort_order' => 11],
         ];
 
         foreach ($menus as $menu) {

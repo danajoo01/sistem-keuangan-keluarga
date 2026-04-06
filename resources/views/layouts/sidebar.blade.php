@@ -98,6 +98,13 @@
                             </a>
                         </li>
                         @endcan
+                        @can('config-mail')
+                        <li class="nxl-item">
+                            <a href="{{ route('master-data.config-mail.edit') }}" class="nxl-link {{ request()->routeIs('master-data.config-mail.*') ? 'active' : '' }}">
+                                <span class="nxl-mtext">Config Mail</span>
+                            </a>
+                        </li>
+                        @endcan
                     </ul>
                 </li>
                 @endcan

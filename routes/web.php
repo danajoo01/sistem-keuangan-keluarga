@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MailSettingController;
 use App\Http\Controllers\RoleAccessController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UangKeluarController;
 use App\Http\Controllers\UangMasukController;
+use App\Http\Controllers\UserNotificationController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +20,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['au
 Route::middleware('auth')->group(function () {
     Route::get('/attachments/preview', [AttachmentController::class, 'preview'])->middleware('signed')->name('attachments.preview');
     Route::get('/attachments/download', [AttachmentController::class, 'download'])->middleware('signed')->name('attachments.download');
+    Route::get('/notifications/{notification}/visit', [UserNotificationController::class, 'visit'])->name('notifications.visit');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -32,6 +35,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/role-access', [RoleAccessController::class, 'index'])->middleware('can:role-akses')->name('role-access.index');
         Route::get('/role-access/{role}', [RoleAccessController::class, 'show'])->middleware('can:role-akses')->name('role-access.show');
         Route::patch('/role-access/{role}', [RoleAccessController::class, 'update'])->middleware('can:role-akses')->name('role-access.update');
+        Route::get('/config-mail', [MailSettingController::class, 'edit'])->middleware('can:config-mail')->name('config-mail.edit');
+        Route::patch('/config-mail', [MailSettingController::class, 'update'])->middleware('can:config-mail')->name('config-mail.update');
     });
 
     Route::prefix('keuangan')->name('keuangan.')->group(function () {

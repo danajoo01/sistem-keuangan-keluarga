@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreUangMasukRequest;
 use App\Http\Requests\UpdateUangMasukRequest;
 use App\Models\UangMasuk;
+use App\Support\FinanceNotifier;
+use App\Support\MailConfiguration;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -51,6 +53,10 @@ class UangMasukController extends Controller
             'status' => $context === 'master' ? 'approved' : 'pending',
         ]);
 
+        if ($context === 'submission') {
+            FinanceNotifier::notifyAdminsForSubmission($income, $request->boolean('send_email'));
+        }
+
         return redirect()
             ->route($this->contextConfig($context)['showRoute'], $income)
             ->with('success', $context === 'master'
@@ -72,6 +78,8 @@ class UangMasukController extends Controller
                 'approval_note' => $validated['approval_note'] ?? null,
                 'approved_by' => $request->user()->id,
             ]);
+
+            FinanceNotifier::notifyUserForSubmissionStatus($income->fresh(['creator']), $request->boolean('send_email'));
 
             $message = 'Status pengajuan dana berhasil diperbarui.';
         } elseif ($context === 'submission' && $income->isSubmission()) {
@@ -178,6 +186,10 @@ class UangMasukController extends Controller
             'canDelete' => $income ? $this->canDelete($request, $income, $context) : false,
             'canEditRecord' => $income ? $this->canEdit($request, $income, $context) : false,
             'isStatusOnlyEdit' => $context === 'approval' && $income?->isSubmission() && $mode === 'edit',
+            'mailAvailable' => MailConfiguration::isConfigured(),
+            'showSendEmailOption' => MailConfiguration::isConfigured()
+                && (($context === 'submission' && $mode === 'create')
+                    || ($context === 'approval' && $income?->isSubmission() && $mode === 'edit')),
         ]);
     }
 
