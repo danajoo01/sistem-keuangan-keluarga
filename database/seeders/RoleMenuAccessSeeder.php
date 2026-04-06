@@ -14,8 +14,8 @@ class RoleMenuAccessSeeder extends Seeder
     public function run(): void
     {
         $roleAccessMap = [
-            'admin' => ['dashboard', 'profile', 'master-data', 'users', 'role-akses'],
-            'user' => ['dashboard', 'profile'],
+            'admin' => ['dashboard', 'profile', 'master-data', 'users', 'role-akses', 'data-pemasukan', 'approval-pengajuan', 'approval-pengeluaran'],
+            'user' => ['dashboard', 'profile', 'pengajuan-dana', 'data-pengeluaran'],
         ];
 
         foreach ($roleAccessMap as $role => $keys) {

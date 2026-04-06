@@ -30,6 +30,52 @@
                     </a>
                 </li>
                 @endcan
+                @canany(['data-pemasukan', 'pengajuan-dana', 'approval-pengajuan', 'data-pengeluaran', 'approval-pengeluaran'])
+                <li class="nxl-item nxl-hasmenu {{ request()->routeIs('keuangan.*') ? 'nxl-trigger' : '' }}">
+                    <a href="javascript:void(0);" class="nxl-link {{ request()->routeIs('keuangan.*') ? 'active' : '' }}">
+                        <span class="nxl-micon"><i class="feather-dollar-sign"></i></span>
+                        <span class="nxl-mtext">Keuangan</span>
+                        <span class="nxl-arrow"><i class="feather-chevron-down"></i></span>
+                    </a>
+                    <ul class="nxl-submenu {{ request()->routeIs('keuangan.*') ? 'submenu-open' : '' }}">
+                        @can('data-pemasukan')
+                        <li class="nxl-item">
+                            <a href="{{ route('keuangan.pemasukan.index') }}" class="nxl-link {{ request()->routeIs('keuangan.pemasukan.*') ? 'active' : '' }}">
+                                <span class="nxl-mtext">Data Pemasukan</span>
+                            </a>
+                        </li>
+                        @endcan
+                        @can('pengajuan-dana')
+                        <li class="nxl-item">
+                            <a href="{{ route('keuangan.pengajuan-dana.index') }}" class="nxl-link {{ request()->routeIs('keuangan.pengajuan-dana.*') ? 'active' : '' }}">
+                                <span class="nxl-mtext">Pengajuan Dana</span>
+                            </a>
+                        </li>
+                        @endcan
+                        @can('approval-pengajuan')
+                        <li class="nxl-item">
+                            <a href="{{ route('keuangan.approval-pengajuan.index') }}" class="nxl-link {{ request()->routeIs('keuangan.approval-pengajuan.*') ? 'active' : '' }}">
+                                <span class="nxl-mtext">Approval Pengajuan</span>
+                            </a>
+                        </li>
+                        @endcan
+                        @can('data-pengeluaran')
+                        <li class="nxl-item">
+                            <a href="{{ route('keuangan.pengeluaran.index') }}" class="nxl-link {{ request()->routeIs('keuangan.pengeluaran.*') ? 'active' : '' }}">
+                                <span class="nxl-mtext">Data Pengeluaran</span>
+                            </a>
+                        </li>
+                        @endcan
+                        @can('approval-pengeluaran')
+                        <li class="nxl-item">
+                            <a href="{{ route('keuangan.approval-pengeluaran.index') }}" class="nxl-link {{ request()->routeIs('keuangan.approval-pengeluaran.*') ? 'active' : '' }}">
+                                <span class="nxl-mtext">Approval Pengeluaran</span>
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </li>
+                @endcanany
                 @can('master-data')
                 <li class="nxl-item nxl-hasmenu {{ request()->routeIs('master-data.*') ? 'nxl-trigger' : '' }}">
                     <a href="javascript:void(0);" class="nxl-link {{ request()->routeIs('master-data.*') ? 'active' : '' }}">
