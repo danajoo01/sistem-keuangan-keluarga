@@ -28,8 +28,10 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('master-data')->name('master-data.')->group(function () {
         Route::get('/users', [UserManagementController::class, 'index'])->middleware('can:users')->name('users.index');
+        Route::post('/users', [UserManagementController::class, 'store'])->middleware('can:users')->name('users.store');
         Route::get('/users/{user}', [UserManagementController::class, 'show'])->middleware('can:users')->name('users.show');
         Route::patch('/users/{user}', [UserManagementController::class, 'update'])->middleware('can:users')->name('users.update');
+        Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->middleware('can:users')->name('users.destroy');
         Route::patch('/users/{user}/approve', [UserManagementController::class, 'approve'])->middleware('can:users')->name('users.approve');
 
         Route::get('/role-access', [RoleAccessController::class, 'index'])->middleware('can:role-akses')->name('role-access.index');
