@@ -175,6 +175,8 @@ class UangKeluarController extends Controller
     private function renderPage(Request $request, string $context, ?UangKeluar $expense = null, string $mode = 'create'): View
     {
         $config = $this->contextConfig($context);
+        $showSendEmailOption = ($context === 'user' && $mode === 'create')
+            || ($context === 'approval' && $expense && $mode === 'edit');
 
         return view('keuangan.uang-keluar.index', [
             'context' => $context,
@@ -189,10 +191,8 @@ class UangKeluarController extends Controller
             'canCreate' => $context === 'user',
             'canEditRecord' => $expense ? $this->canEdit($request, $expense, $context) : false,
             'canDelete' => $expense ? $this->canDelete($request, $expense, $context) : false,
-            'mailAvailable' => MailConfiguration::isConfigured(),
-            'showSendEmailOption' => MailConfiguration::isConfigured()
-                && (($context === 'user' && $mode === 'create')
-                    || ($context === 'approval' && $expense && $mode === 'edit')),
+            'mailAvailable' => $showSendEmailOption ? MailConfiguration::isConfigured() : false,
+            'showSendEmailOption' => $showSendEmailOption && MailConfiguration::isConfigured(),
         ]);
     }
 

@@ -12,6 +12,7 @@ use Database\Seeders\MenuListSeeder;
 use Database\Seeders\RoleMenuAccessSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -222,6 +223,62 @@ class FinanceWorkflowTest extends TestCase
 
         $deleteResponse->assertRedirect(route('keuangan.pengajuan-dana.index'));
         $this->assertDatabaseMissing('uang_masuk', ['id' => $income->id]);
+    }
+
+    public function test_user_can_open_pengajuan_dana_detail_page(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'status' => 'active',
+        ]);
+
+        $income = UangMasuk::query()->create([
+            'created_by' => $user->id,
+            'source' => 'pengajuan',
+            'jumlah' => 120000,
+            'deskripsi' => 'Pengajuan halaman detail',
+            'tanggal' => '2026-04-06',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('keuangan.pengajuan-dana.show', $income))
+            ->assertOk();
+    }
+
+    public function test_user_can_open_pengajuan_dana_detail_page_even_when_mail_setting_data_is_invalid(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'status' => 'active',
+        ]);
+
+        $income = UangMasuk::query()->create([
+            'created_by' => $user->id,
+            'source' => 'pengajuan',
+            'jumlah' => 130000,
+            'deskripsi' => 'Pengajuan dengan mail setting invalid',
+            'tanggal' => '2026-04-06',
+            'status' => 'approved',
+            'approval_note' => 'Disetujui',
+        ]);
+
+        DB::table('mail_settings')->insert([
+            'mailer' => 'smtp',
+            'host' => 'smtp.example.com',
+            'port' => 587,
+            'username' => 'mailer',
+            'password' => 'plain-text-password',
+            'encryption' => 'tls',
+            'from_address' => 'noreply@example.com',
+            'from_name' => 'Keuangan',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('keuangan.pengajuan-dana.show', $income))
+            ->assertOk();
     }
 
     public function test_user_can_edit_and_delete_pending_pengeluaran(): void

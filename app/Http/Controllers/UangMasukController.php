@@ -171,6 +171,8 @@ class UangMasukController extends Controller
     private function renderPage(Request $request, string $context, ?UangMasuk $income = null, string $mode = 'create'): View
     {
         $config = $this->contextConfig($context);
+        $showSendEmailOption = ($context === 'submission' && $mode === 'create')
+            || ($context === 'approval' && $income?->isSubmission() && $mode === 'edit');
 
         return view('keuangan.uang-masuk.index', [
             'context' => $context,
@@ -186,10 +188,8 @@ class UangMasukController extends Controller
             'canDelete' => $income ? $this->canDelete($request, $income, $context) : false,
             'canEditRecord' => $income ? $this->canEdit($request, $income, $context) : false,
             'isStatusOnlyEdit' => $context === 'approval' && $income?->isSubmission() && $mode === 'edit',
-            'mailAvailable' => MailConfiguration::isConfigured(),
-            'showSendEmailOption' => MailConfiguration::isConfigured()
-                && (($context === 'submission' && $mode === 'create')
-                    || ($context === 'approval' && $income?->isSubmission() && $mode === 'edit')),
+            'mailAvailable' => $showSendEmailOption ? MailConfiguration::isConfigured() : false,
+            'showSendEmailOption' => $showSendEmailOption && MailConfiguration::isConfigured(),
         ]);
     }
 
