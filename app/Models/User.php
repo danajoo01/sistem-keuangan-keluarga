@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -21,6 +22,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'status',
     ];
 
     /**
@@ -44,5 +47,24 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function menuAccesses(): BelongsToMany
+    {
+        return $this->belongsToMany(MenuList::class, 'role_menu_access', 'role', 'menu_list_id', 'role', 'id');
+    }
+
+    public function hasAccess(string $key): bool
+    {
+        if ($this->role === 'admin') {
+            return true;
+        }
+
+        return $this->menuAccesses()->where('key', $key)->exists();
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
     }
 }

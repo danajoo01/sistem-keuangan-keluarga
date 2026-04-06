@@ -32,6 +32,7 @@
 
     <!--! BEGIN: Custom CSS-->
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/theme.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom.css') }}" />
     <!--! END: Custom CSS-->
 </head>
 

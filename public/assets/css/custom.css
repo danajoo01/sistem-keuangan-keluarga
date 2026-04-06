@@ -1,0 +1,130 @@
+.nxl-header .header-wrapper {
+    min-height: 80px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.nxl-header .header-wrapper .header-left,
+.nxl-header .header-wrapper .header-right,
+.nxl-header .header-wrapper .header-right > .d-flex {
+    display: flex;
+    align-items: center;
+}
+
+.nxl-header .header-wrapper .header-right > .d-flex {
+    gap: 0.25rem;
+}
+
+.nxl-header .header-wrapper .nxl-h-item {
+    min-height: auto;
+}
+
+.nxl-header .header-wrapper .nxl-head-link,
+.nxl-header .header-wrapper .dropdown > a {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    margin-left: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+}
+
+.nxl-header .header-wrapper .user-avtar {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    margin-right: 0;
+    border-radius: 50%;
+    background-color: #e5e7eb;
+}
+
+.page-header {
+    min-height: 72px;
+    padding: 14px 30px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.page-header .page-header-left {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    column-gap: 14px;
+    row-gap: 8px;
+}
+
+.page-header .page-header-title {
+    display: inline-flex;
+    align-items: center;
+}
+
+.page-header h5 {
+    margin-right: 0;
+    padding-right: 14px;
+    line-height: 1.2;
+}
+
+.page-header .breadcrumb {
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.page-header .breadcrumb-item {
+    display: flex;
+    align-items: center;
+    color: #8a94a6;
+}
+
+.page-header .breadcrumb-item + .breadcrumb-item {
+    padding-left: 0.75rem;
+}
+
+.page-header .breadcrumb-item + .breadcrumb-item::before {
+    top: 0;
+    padding-right: 0.75rem;
+}
+
+.page-header .breadcrumb-item:last-child {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+@media (max-width: 767.98px) {
+    .nxl-header .header-wrapper {
+        padding: 0 16px;
+    }
+
+    .page-header {
+        min-height: auto;
+        padding: 12px 16px;
+    }
+
+    .page-header h5 {
+        padding-right: 10px;
+    }
+}
+
+.nxl-navigation .navbar-content .nxl-submenu {
+    display: none;
+    padding-left: 0;
+    list-style: none;
+}
+
+.nxl-navigation .navbar-content .nxl-submenu.submenu-open {
+    display: block;
+}
+
+.nxl-navigation .navbar-content .nxl-submenu .nxl-link {
+    margin-left: 2.75rem !important;
+}
+
+.detail-list dt,
+.detail-list dd {
+    margin-bottom: 1rem;
+}
