@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Providers\AppServiceProvider;
 use App\Models\UangKeluar;
 use App\Models\UangMasuk;
+use App\Support\AttachmentUrl;
 use App\Models\User;
 use Database\Seeders\MenuListSeeder;
 use Database\Seeders\RoleMenuAccessSeeder;
@@ -282,5 +283,48 @@ class FinanceWorkflowTest extends TestCase
         $response->assertSee('Rp 300.000');
         $response->assertSee('Rp 700.000');
         $response->assertDontSee('Rp 1.500.000');
+    }
+
+    public function test_user_can_preview_own_expense_proof_via_application_route(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'role' => 'user',
+            'status' => 'active',
+        ]);
+
+        $proofPath = UploadedFile::fake()->image('bukti.png')->store('bukti-pengeluaran', 'public');
+
+        $expense = UangKeluar::query()->create([
+            'created_by' => $user->id,
+            'jumlah' => 150000,
+            'deskripsi' => 'Pengeluaran dengan bukti',
+            'tanggal' => '2026-04-06',
+            'bukti_path' => $proofPath,
+            'bukti_original_name' => 'bukti.png',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($user)->get(AttachmentUrl::preview('public', $expense->bukti_path, $expense->bukti_original_name, $expense->created_by));
+
+        $response->assertOk();
+    }
+
+    public function test_user_can_download_own_expense_proof_via_generic_attachment_route(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'role' => 'user',
+            'status' => 'active',
+        ]);
+
+        $proofPath = UploadedFile::fake()->image('download.png')->store('bukti-pengeluaran', 'public');
+
+        $response = $this->actingAs($user)->get(AttachmentUrl::download('public', $proofPath, 'download.png', $user->id));
+
+        $response->assertOk();
+        $response->assertHeader('content-disposition');
     }
 }

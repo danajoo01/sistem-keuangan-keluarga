@@ -3,8 +3,8 @@
 @section('title', $page['title'])
 
 @php
-use Illuminate\Support\Facades\Storage;
-
+$previewUrl = $selectedExpense ? \App\Support\AttachmentUrl::preview('public', $selectedExpense->bukti_path, $selectedExpense->bukti_original_name, $selectedExpense->created_by) : null;
+$downloadUrl = $selectedExpense ? \App\Support\AttachmentUrl::download('public', $selectedExpense->bukti_path, $selectedExpense->bukti_original_name, $selectedExpense->created_by) : null;
 $isEdit = $selectedExpense && $mode === 'edit';
 $isView = $selectedExpense && $mode === 'view';
 $isCreate = ! $selectedExpense || $mode === 'create';
@@ -155,8 +155,9 @@ $statusBadgeMap = [
                             <div class="col-12">
                                 <label for="bukti" class="form-label">Upload Bukti</label>
                                 @if($selectedExpense)
-                                <div class="mb-2">
-                                    <a href="{{ Storage::url($selectedExpense->bukti_path) }}" target="_blank" class="btn btn-light btn-sm">{{ $selectedExpense->bukti_original_name }}</a>
+                                <div class="mb-2 d-flex gap-2 flex-wrap">
+                                    <a href="{{ $previewUrl }}" target="_blank" class="btn btn-light btn-sm">Lihat Bukti</a>
+                                    <a href="{{ $downloadUrl }}" class="btn btn-outline-secondary btn-sm">Download Bukti</a>
                                 </div>
                                 @endif
                                 <input

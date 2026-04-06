@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoleAccessController;
 use App\Http\Controllers\ProfileController;
@@ -15,6 +16,9 @@ Route::get('/', function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified', 'can:dashboard'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/attachments/preview', [AttachmentController::class, 'preview'])->middleware('signed')->name('attachments.preview');
+    Route::get('/attachments/download', [AttachmentController::class, 'download'])->middleware('signed')->name('attachments.download');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

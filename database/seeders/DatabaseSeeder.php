@@ -38,5 +38,10 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
             'email_verified_at' => now(),
         ]);
+
+        $this->call([
+            UangMasukSeeder::class,
+            UangKeluarSeeder::class,
+        ]);
     }
 }

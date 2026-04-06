@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreUangKeluarRequest;
 use App\Http\Requests\UpdateUangKeluarRequest;
 use App\Models\UangKeluar;
+use App\Support\AttachmentUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -149,8 +150,9 @@ class UangKeluarController extends Controller
                 'deskripsi' => e($expense->deskripsi),
                 'pemohon' => e($expense->creator?->name ?? '-'),
                 'bukti' => sprintf(
-                    '<a href="%s" target="_blank" class="btn btn-light btn-sm">Lihat Bukti</a>',
-                    Storage::url($expense->bukti_path)
+                    '<div class="d-flex gap-2"><a href="%s" target="_blank" class="btn btn-light btn-sm">Lihat Bukti</a><a href="%s" class="btn btn-outline-secondary btn-sm">Download</a></div>',
+                    AttachmentUrl::preview('public', $expense->bukti_path, $expense->bukti_original_name, $expense->created_by),
+                    AttachmentUrl::download('public', $expense->bukti_path, $expense->bukti_original_name, $expense->created_by)
                 ),
                 'status' => $this->statusBadge($expense->status),
                 'aksi' => $this->actionButtons($expense, $context, $config['showRoute'], $request),
@@ -263,7 +265,6 @@ class UangKeluarController extends Controller
             && (int) $expense->created_by === (int) $request->user()->id
             && $expense->status === 'pending';
     }
-
     private function actionButtons(UangKeluar $expense, string $context, string $showRoute, Request $request): string
     {
         $buttons = [
