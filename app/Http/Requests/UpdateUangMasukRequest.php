@@ -19,8 +19,9 @@ class UpdateUangMasukRequest extends FormRequest
     {
         /** @var UangMasuk|null $income */
         $income = $this->route('income');
+        $routeName = (string) $this->route()?->getName();
 
-        if ($income?->isSubmission()) {
+        if (str_starts_with($routeName, 'keuangan.approval-pengajuan.') && $income?->isSubmission()) {
             return [
                 'status' => ['required', 'in:approved,rejected'],
                 'approval_note' => ['nullable', 'string', 'max:1000'],

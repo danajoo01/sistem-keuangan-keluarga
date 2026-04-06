@@ -7,9 +7,7 @@ $isEdit = $selectedIncome && $mode === 'edit';
 $isView = $selectedIncome && $mode === 'view';
 $isCreate = ! $selectedIncome || $mode === 'create';
 $disableEmptyForm = ! $canCreate && ! $selectedIncome;
-$formAction = $isEdit
-? route($context === 'approval' ? 'keuangan.approval-pengajuan.update' : 'keuangan.pemasukan.update', $selectedIncome)
-: $storeUrl;
+$formAction = $isEdit ? $updateUrl : $storeUrl;
 $statusBadgeMap = [
 'approved' => ['bg-soft-success', 'text-success'],
 'rejected' => ['bg-soft-danger', 'text-danger'],
@@ -157,7 +155,7 @@ $statusBadgeMap = [
                                 @error('tanggal')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
 
-                            @if($selectedIncome && $selectedIncome->isSubmission())
+                            @if($selectedIncome && $selectedIncome->isSubmission() && $context === 'approval')
                             <div class="col-md-6">
                                 <label for="status" class="form-label">Status</label>
                                 @if($isEdit)
@@ -191,6 +189,11 @@ $statusBadgeMap = [
                             <div class="col-12">
                                 <label class="form-label">Keterangan Approval</label>
                                 <textarea class="form-control" rows="3" disabled>{{ $selectedIncome->approval_note }}</textarea>
+                            </div>
+                            @elseif($selectedIncome)
+                            <div class="col-md-6">
+                                <label class="form-label">Status</label>
+                                <input type="text" value="{{ ucfirst($selectedIncome->status) }}" class="form-control" disabled>
                             </div>
                             @endif
                         </div>

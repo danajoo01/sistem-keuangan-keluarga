@@ -66,7 +66,7 @@ class UangMasukController extends Controller
 
         $validated = $request->validated();
 
-        if ($income->isSubmission()) {
+        if ($context === 'approval' && $income->isSubmission()) {
             $income->update([
                 'status' => $validated['status'],
                 'approval_note' => $validated['approval_note'] ?? null,
@@ -74,6 +74,16 @@ class UangMasukController extends Controller
             ]);
 
             $message = 'Status pengajuan dana berhasil diperbarui.';
+        } elseif ($context === 'submission' && $income->isSubmission()) {
+            $income->update([
+                'jumlah' => $validated['jumlah'],
+                'deskripsi' => $validated['deskripsi'],
+                'tanggal' => $validated['tanggal'],
+                'status' => 'pending',
+                'approved_by' => null,
+            ]);
+
+            $message = 'Pengajuan dana berhasil diperbarui.';
         } else {
             $income->update([
                 'jumlah' => $validated['jumlah'],
@@ -93,12 +103,14 @@ class UangMasukController extends Controller
 
     public function destroy(Request $request, UangMasuk $income): RedirectResponse
     {
-        abort_unless($this->canDelete($request, $income), 403);
+        $context = $this->resolveContext($request);
+
+        abort_unless($this->canDelete($request, $income, $context), 403);
 
         $income->delete();
 
         return redirect()
-            ->route('keuangan.pemasukan.index')
+            ->route($this->contextConfig($context)['indexRoute'])
             ->with('success', 'Data pemasukan berhasil dihapus.');
     }
 
@@ -160,11 +172,12 @@ class UangMasukController extends Controller
             'tableAjaxUrl' => route($config['dataRoute']),
             'indexUrl' => route($config['indexRoute']),
             'storeUrl' => route($config['storeRoute']),
-            'deleteUrl' => $income ? route('keuangan.pemasukan.destroy', $income) : null,
+            'updateUrl' => $income ? $this->resolveUpdateUrl($context, $income) : route($config['storeRoute']),
+            'deleteUrl' => $income ? $this->resolveDeleteUrl($context, $income) : null,
             'canCreate' => $context !== 'approval',
-            'canDelete' => $income ? $this->canDelete($request, $income) : false,
+            'canDelete' => $income ? $this->canDelete($request, $income, $context) : false,
             'canEditRecord' => $income ? $this->canEdit($request, $income, $context) : false,
-            'isStatusOnlyEdit' => $income?->isSubmission() && $mode === 'edit',
+            'isStatusOnlyEdit' => $context === 'approval' && $income?->isSubmission() && $mode === 'edit',
         ]);
     }
 
@@ -245,7 +258,9 @@ class UangMasukController extends Controller
     private function canEdit(Request $request, UangMasuk $income, string $context): bool
     {
         if ($context === 'submission') {
-            return false;
+            return $income->isSubmission()
+                && (int) $income->created_by === (int) $request->user()->id
+                && $income->status === 'pending';
         }
 
         if ($context === 'approval') {
@@ -255,9 +270,16 @@ class UangMasukController extends Controller
         return true;
     }
 
-    private function canDelete(Request $request, UangMasuk $income): bool
+    private function canDelete(Request $request, UangMasuk $income, string $context): bool
     {
-        return ! $income->isSubmission() && $request->user()->can('data-pemasukan');
+        if ($request->user()->isAdmin()) {
+            return true;
+        }
+
+        return $context === 'submission'
+            && $income->isSubmission()
+            && (int) $income->created_by === (int) $request->user()->id
+            && $income->status === 'pending';
     }
 
     private function actionButtons(UangMasuk $income, string $context, string $showRoute, Request $request): string
@@ -288,5 +310,23 @@ class UangMasukController extends Controller
         };
 
         return sprintf('<span class="badge %s">%s</span>', $classes, ucfirst($status));
+    }
+
+    private function resolveUpdateUrl(string $context, UangMasuk $income): string
+    {
+        return route(match ($context) {
+            'submission' => 'keuangan.pengajuan-dana.update',
+            'approval' => 'keuangan.approval-pengajuan.update',
+            default => 'keuangan.pemasukan.update',
+        }, $income);
+    }
+
+    private function resolveDeleteUrl(string $context, UangMasuk $income): string
+    {
+        return route(match ($context) {
+            'submission' => 'keuangan.pengajuan-dana.destroy',
+            'approval' => 'keuangan.approval-pengajuan.destroy',
+            default => 'keuangan.pemasukan.destroy',
+        }, $income);
     }
 }

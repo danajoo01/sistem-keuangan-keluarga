@@ -31,7 +31,7 @@ class UangKeluarController extends Controller
         $mode = in_array($mode, ['view', 'edit'], true) ? $mode : 'view';
 
         if ($mode === 'edit') {
-            abort_unless($this->canEdit($expense, $context), 403);
+            abort_unless($this->canEdit($request, $expense, $context), 403);
         }
 
         return $this->renderPage($request, $context, $expense, $mode);
@@ -62,19 +62,61 @@ class UangKeluarController extends Controller
     {
         $context = $this->resolveContext($request);
 
-        abort_unless($this->canEdit($expense, $context), 403);
+        abort_unless($this->canEdit($request, $expense, $context), 403);
 
         $validated = $request->validated();
 
-        $expense->update([
-            'status' => $validated['status'],
-            'approval_note' => $validated['approval_note'] ?? null,
-            'approved_by' => $request->user()->id,
-        ]);
+        if ($context === 'approval') {
+            $expense->update([
+                'status' => $validated['status'],
+                'approval_note' => $validated['approval_note'] ?? null,
+                'approved_by' => $request->user()->id,
+            ]);
+
+            return redirect()
+                ->route('keuangan.approval-pengeluaran.show', ['expense' => $expense, 'mode' => 'view'])
+                ->with('success', 'Status pengeluaran berhasil diperbarui.');
+        }
+
+        $payload = [
+            'jumlah' => $validated['jumlah'],
+            'deskripsi' => $validated['deskripsi'],
+            'tanggal' => $validated['tanggal'],
+        ];
+
+        if ($request->hasFile('bukti')) {
+            $file = $request->file('bukti');
+
+            if ($expense->bukti_path && Storage::disk('public')->exists($expense->bukti_path)) {
+                Storage::disk('public')->delete($expense->bukti_path);
+            }
+
+            $payload['bukti_path'] = $file->store('bukti-pengeluaran', 'public');
+            $payload['bukti_original_name'] = $file->getClientOriginalName();
+        }
+
+        $expense->update($payload);
 
         return redirect()
-            ->route('keuangan.approval-pengeluaran.show', ['expense' => $expense, 'mode' => 'view'])
-            ->with('success', 'Status pengeluaran berhasil diperbarui.');
+            ->route('keuangan.pengeluaran.show', ['expense' => $expense, 'mode' => 'view'])
+            ->with('success', 'Data pengeluaran berhasil diperbarui.');
+    }
+
+    public function destroy(Request $request, UangKeluar $expense): RedirectResponse
+    {
+        $context = $this->resolveContext($request);
+
+        abort_unless($this->canDelete($request, $expense, $context), 403);
+
+        if ($expense->bukti_path && Storage::disk('public')->exists($expense->bukti_path)) {
+            Storage::disk('public')->delete($expense->bukti_path);
+        }
+
+        $expense->delete();
+
+        return redirect()
+            ->route($this->contextConfig($context)['indexRoute'])
+            ->with('success', 'Data pengeluaran berhasil dihapus.');
     }
 
     public function data(Request $request): JsonResponse
@@ -111,7 +153,7 @@ class UangKeluarController extends Controller
                     Storage::url($expense->bukti_path)
                 ),
                 'status' => $this->statusBadge($expense->status),
-                'aksi' => $this->actionButtons($expense, $context, $config['showRoute']),
+                'aksi' => $this->actionButtons($expense, $context, $config['showRoute'], $request),
             ]);
 
         return response()->json([
@@ -134,8 +176,11 @@ class UangKeluarController extends Controller
             'tableAjaxUrl' => route($config['dataRoute']),
             'indexUrl' => route($config['indexRoute']),
             'storeUrl' => route($config['storeRoute']),
+            'updateUrl' => $expense ? $this->resolveUpdateUrl($context, $expense) : route($config['storeRoute']),
+            'deleteUrl' => $expense ? $this->resolveDeleteUrl($context, $expense) : null,
             'canCreate' => $context === 'user',
-            'canEditRecord' => $expense ? $this->canEdit($expense, $context) : false,
+            'canEditRecord' => $expense ? $this->canEdit($request, $expense, $context) : false,
+            'canDelete' => $expense ? $this->canDelete($request, $expense, $context) : false,
         ]);
     }
 
@@ -197,12 +242,29 @@ class UangKeluarController extends Controller
         return (int) $expense->created_by === (int) $request->user()->id;
     }
 
-    private function canEdit(UangKeluar $expense, string $context): bool
+    private function canEdit(Request $request, UangKeluar $expense, string $context): bool
     {
-        return $context === 'approval' && $expense->exists;
+        if ($context === 'approval') {
+            return $expense->exists;
+        }
+
+        return $expense->exists
+            && (int) $expense->created_by === (int) $request->user()->id
+            && $expense->status === 'pending';
     }
 
-    private function actionButtons(UangKeluar $expense, string $context, string $showRoute): string
+    private function canDelete(Request $request, UangKeluar $expense, string $context): bool
+    {
+        if ($request->user()->isAdmin()) {
+            return true;
+        }
+
+        return $context === 'user'
+            && (int) $expense->created_by === (int) $request->user()->id
+            && $expense->status === 'pending';
+    }
+
+    private function actionButtons(UangKeluar $expense, string $context, string $showRoute, Request $request): string
     {
         $buttons = [
             sprintf(
@@ -211,7 +273,7 @@ class UangKeluarController extends Controller
             ),
         ];
 
-        if ($this->canEdit($expense, $context)) {
+        if ($this->canEdit($request, $expense, $context)) {
             $buttons[] = sprintf(
                 '<a href="%s" class="btn btn-primary btn-sm">Edit</a>',
                 route($showRoute, ['expense' => $expense, 'mode' => 'edit'])
@@ -230,5 +292,15 @@ class UangKeluarController extends Controller
         };
 
         return sprintf('<span class="badge %s">%s</span>', $classes, ucfirst($status));
+    }
+
+    private function resolveUpdateUrl(string $context, UangKeluar $expense): string
+    {
+        return route($context === 'approval' ? 'keuangan.approval-pengeluaran.update' : 'keuangan.pengeluaran.update', $expense);
+    }
+
+    private function resolveDeleteUrl(string $context, UangKeluar $expense): string
+    {
+        return route($context === 'approval' ? 'keuangan.approval-pengeluaran.destroy' : 'keuangan.pengeluaran.destroy', $expense);
     }
 }

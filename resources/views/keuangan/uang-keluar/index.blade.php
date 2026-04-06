@@ -9,9 +9,7 @@ $isEdit = $selectedExpense && $mode === 'edit';
 $isView = $selectedExpense && $mode === 'view';
 $isCreate = ! $selectedExpense || $mode === 'create';
 $disableEmptyForm = ! $canCreate && ! $selectedExpense;
-$formAction = $isEdit
-? route('keuangan.approval-pengeluaran.update', $selectedExpense)
-: $storeUrl;
+$formAction = $isEdit ? $updateUrl : $storeUrl;
 $statusBadgeMap = [
 'approved' => ['bg-soft-success', 'text-success'],
 'rejected' => ['bg-soft-danger', 'text-danger'],
@@ -127,7 +125,7 @@ $statusBadgeMap = [
                                     id="jumlah"
                                     value="{{ old('jumlah', $selectedExpense?->jumlah) }}"
                                     class="form-control @error('jumlah') is-invalid @enderror"
-                                    @disabled($isView || $isEdit || $disableEmptyForm)>
+                                    @disabled($isView || ($isEdit && $context==='approval' ) || $disableEmptyForm)>
                                 @error('jumlah')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
 
@@ -138,7 +136,7 @@ $statusBadgeMap = [
                                     id="deskripsi"
                                     rows="4"
                                     class="form-control @error('deskripsi') is-invalid @enderror"
-                                    @disabled($isView || $isEdit || $disableEmptyForm)>{{ old('deskripsi', $selectedExpense?->deskripsi) }}</textarea>
+                                    @disabled($isView || ($isEdit && $context==='approval' ) || $disableEmptyForm)>{{ old('deskripsi', $selectedExpense?->deskripsi) }}</textarea>
                                 @error('deskripsi')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
 
@@ -150,7 +148,7 @@ $statusBadgeMap = [
                                     id="tanggal"
                                     value="{{ old('tanggal', $selectedExpense?->tanggal?->format('Y-m-d')) }}"
                                     class="form-control @error('tanggal') is-invalid @enderror"
-                                    @disabled($isView || $isEdit || $disableEmptyForm)>
+                                    @disabled($isView || ($isEdit && $context==='approval' ) || $disableEmptyForm)>
                                 @error('tanggal')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
 
@@ -166,7 +164,7 @@ $statusBadgeMap = [
                                     name="bukti"
                                     id="bukti"
                                     class="form-control @error('bukti') is-invalid @enderror"
-                                    @disabled($isView || $isEdit || $disableEmptyForm)>
+                                    @disabled($isView || ($isEdit && $context==='approval' ) || $disableEmptyForm)>
                                 <div class="fs-12 text-muted mt-1">Format: PNG, JPG, JPEG, PDF maksimal 10 MB.</div>
                                 @error('bukti')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
@@ -174,7 +172,7 @@ $statusBadgeMap = [
                             @if($selectedExpense)
                             <div class="col-md-6">
                                 <label for="status" class="form-label">Status</label>
-                                @if($isEdit)
+                                @if($isEdit && $context === 'approval')
                                 <select
                                     name="status"
                                     id="status"
@@ -191,6 +189,7 @@ $statusBadgeMap = [
                                 <label class="form-label">Approved Oleh</label>
                                 <input type="text" value="{{ $selectedExpense->approver?->name ?? '-' }}" class="form-control" disabled>
                             </div>
+                            @if($context === 'approval')
                             <div class="col-12">
                                 <label for="approval_note" class="form-label">Keterangan Approval</label>
                                 <textarea
@@ -201,25 +200,44 @@ $statusBadgeMap = [
                                     @disabled(! $isEdit)>{{ old('approval_note', $selectedExpense->approval_note) }}</textarea>
                                 @error('approval_note')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
+                            @elseif($selectedExpense->approval_note)
+                            <div class="col-12">
+                                <label class="form-label">Keterangan Approval</label>
+                                <textarea class="form-control" rows="3" disabled>{{ $selectedExpense->approval_note }}</textarea>
+                            </div>
+                            @endif
                             @endif
                         </div>
 
                         <div class="mt-4 d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                            @if($canDelete)
+                            <button type="submit" form="delete-expense-form" class="btn btn-outline-danger" onclick="return confirm('Hapus data pengeluaran ini?');">Hapus</button>
+                            @else
                             <span class="text-muted fs-12">
-                                @if($isEdit)
+                                @if($isEdit && $context === 'approval')
                                 Admin hanya dapat memperbarui status dan keterangan approval.
+                                @elseif($isEdit)
+                                User masih bisa mengubah data selama status pending.
                                 @elseif($isView)
                                 Mode view only.
                                 @else
                                 Lengkapi field wajib sebelum menyimpan.
                                 @endif
                             </span>
+                            @endif
 
                             @if(! $isView && ($canCreate || $isEdit))
                             <button type="submit" class="btn btn-primary">{{ $page['submitLabel'] }}</button>
                             @endif
                         </div>
                     </form>
+
+                    @if($canDelete)
+                    <form id="delete-expense-form" method="POST" action="{{ $deleteUrl }}">
+                        @csrf
+                        @method('DELETE')
+                    </form>
+                    @endif
                 </div>
             </div>
         </div>

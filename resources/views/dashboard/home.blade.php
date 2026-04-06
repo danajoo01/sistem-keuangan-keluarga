@@ -3,6 +3,9 @@
 @section('title', 'Dashboard')
 
 @section('content')
+@php
+$formatCurrency = fn ($amount) => 'Rp ' . number_format((float) $amount, 0, ',', '.');
+@endphp
 <div class="page-header">
     <div class="page-header-left d-flex align-items-center">
         <div class="page-header-title">
@@ -40,14 +43,14 @@
                     <div class="d-flex align-items-start justify-content-between mb-3">
                         <div>
                             <p class="fs-12 fw-medium text-muted mb-1">Pemasukan Bulan Ini</p>
-                            <h3 class="fw-bold mb-0">Rp 0</h3>
+                            <h3 class="fw-bold mb-0">{{ $formatCurrency($incomeThisMonth) }}</h3>
                         </div>
                         <div class="avatar-text avatar-md rounded-circle bg-soft-success">
                             <i class="feather-trending-up text-success"></i>
                         </div>
                     </div>
                     <p class="fs-12 text-muted mb-0">
-                        <span class="badge bg-soft-success text-success me-1">0 transaksi</span>bulan ini
+                        <span class="badge bg-soft-success text-success me-1">{{ $incomeCountThisMonth }} transaksi</span>status approved
                     </p>
                 </div>
             </div>
@@ -59,14 +62,14 @@
                     <div class="d-flex align-items-start justify-content-between mb-3">
                         <div>
                             <p class="fs-12 fw-medium text-muted mb-1">Pengeluaran Bulan Ini</p>
-                            <h3 class="fw-bold mb-0">Rp 0</h3>
+                            <h3 class="fw-bold mb-0">{{ $formatCurrency($expenseThisMonth) }}</h3>
                         </div>
                         <div class="avatar-text avatar-md rounded-circle bg-soft-danger">
                             <i class="feather-trending-down text-danger"></i>
                         </div>
                     </div>
                     <p class="fs-12 text-muted mb-0">
-                        <span class="badge bg-soft-danger text-danger me-1">0 transaksi</span>bulan ini
+                        <span class="badge bg-soft-danger text-danger me-1">{{ $expenseCountThisMonth }} transaksi</span>status approved
                     </p>
                 </div>
             </div>
@@ -78,14 +81,14 @@
                     <div class="d-flex align-items-start justify-content-between mb-3">
                         <div>
                             <p class="fs-12 fw-medium text-muted mb-1">Saldo Saat Ini</p>
-                            <h3 class="fw-bold mb-0">Rp 0</h3>
+                            <h3 class="fw-bold mb-0">{{ $formatCurrency($currentBalance) }}</h3>
                         </div>
                         <div class="avatar-text avatar-md rounded-circle bg-soft-primary">
                             <i class="feather-credit-card text-primary"></i>
                         </div>
                     </div>
                     <p class="fs-12 text-muted mb-0">
-                        <span class="badge bg-soft-primary text-primary me-1">—</span>pemasukan - pengeluaran
+                        <span class="badge bg-soft-primary text-primary me-1">Approved</span>pemasukan - pengeluaran
                     </p>
                 </div>
             </div>
@@ -97,14 +100,14 @@
                     <div class="d-flex align-items-start justify-content-between mb-3">
                         <div>
                             <p class="fs-12 fw-medium text-muted mb-1">Total Transaksi</p>
-                            <h3 class="fw-bold mb-0">0</h3>
+                            <h3 class="fw-bold mb-0">{{ $totalTransactionsThisMonth }}</h3>
                         </div>
                         <div class="avatar-text avatar-md rounded-circle bg-soft-warning">
                             <i class="feather-activity text-warning"></i>
                         </div>
                     </div>
                     <p class="fs-12 text-muted mb-0">
-                        <span class="badge bg-soft-warning text-warning me-1">0</span>bulan ini
+                        <span class="badge bg-soft-warning text-warning me-1">{{ $totalTransactionsThisMonth }}</span>approved bulan ini
                     </p>
                 </div>
             </div>
@@ -118,11 +121,42 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">Transaksi Terbaru</h5>
                 </div>
+                @if($recentTransactions->isEmpty())
                 <div class="card-body text-center py-5">
                     <i class="feather-inbox text-muted" style="font-size: 3rem;"></i>
-                    <h6 class="text-muted mt-3 mb-1">Belum ada transaksi</h6>
-                    <p class="text-muted fs-12 mb-0">Transaksi yang Anda catat akan muncul di sini.</p>
+                    <h6 class="text-muted mt-3 mb-1">Belum ada transaksi approved</h6>
+                    <p class="text-muted fs-12 mb-0">Transaksi approved akan muncul di sini.</p>
                 </div>
+                @else
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Jenis</th>
+                                    <th>Deskripsi</th>
+                                    <th>Tanggal</th>
+                                    <th>Nominal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($recentTransactions as $transaction)
+                                <tr>
+                                    <td>
+                                        <span class="badge {{ $transaction['badge'] }}">
+                                            <i class="{{ $transaction['icon'] }} me-1"></i>{{ $transaction['jenis'] }}
+                                        </span>
+                                    </td>
+                                    <td class="fw-semibold text-dark">{{ $transaction['deskripsi'] }}</td>
+                                    <td>{{ $transaction['tanggal']->format('d M Y') }}</td>
+                                    <td>{{ $formatCurrency($transaction['jumlah']) }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
     </div>
