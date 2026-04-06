@@ -1,66 +1,252 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistem Keuangan Keluarga
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistem Keuangan Keluarga adalah aplikasi berbasis Laravel 12 untuk mengelola pemasukan, pengajuan dana, pengeluaran, approval admin, notifikasi, lampiran bukti, dan konfigurasi email opsional dalam satu alur kerja.
 
-## About Laravel
+## Fitur Utama
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Autentikasi
+- Login
+- Logout
+- Register
+- Verifikasi email
+- Update profile
+- Update password
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Role dan Hak Akses Dinamis
+- Role utama: `admin` dan `user`
+- Hak akses menu disimpan pada tabel `menu_list` dan `role_menu_access`
+- Admin memiliki full access
+- User hanya bisa mengakses menu yang diberikan dari master role akses
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Dashboard
+- Menampilkan ringkasan approved-only
+- Pemasukan bulan ini
+- Pengeluaran bulan ini
+- Saldo saat ini
+- Riwayat transaksi terbaru
 
-## Learning Laravel
+### Master Data
+- Manajemen user
+- Role akses
+- Config mail
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Modul Keuangan
+- Data pemasukan oleh admin
+- Pengajuan dana oleh user
+- Approval pengajuan dana oleh admin
+- Data pengeluaran oleh user
+- Approval pengeluaran oleh admin
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Notifikasi
+- Admin menerima notifikasi saat user membuat pengajuan dana
+- Admin menerima notifikasi saat user membuat pengeluaran
+- User menerima notifikasi saat admin mengubah status pengajuan atau pengeluaran
+- Notifikasi unread tampil di header
+- Saat notifikasi dibuka, data otomatis ditandai sebagai read
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Lampiran Bukti
+- Bukti pengeluaran mendukung file `png`, `jpg`, `jpeg`, dan `pdf`
+- Preview dan download file menggunakan signed route
+- Hanya owner data atau admin yang dapat mengakses file
 
-## Laravel Sponsors
+### Email Opsional
+- Config mail diatur dari halaman `Master Data > Config Mail`
+- Checkbox `Kirim notifikasi email` muncul jika konfigurasi mail sudah lengkap
+- Jika config mail belum lengkap, sistem tetap berjalan dengan notifikasi database tanpa email
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Aturan Bisnis
 
-### Premium Partners
+- Pengajuan dana user masuk ke tabel `uang_masuk` dengan `source = pengajuan` dan status awal `pending`
+- Input pemasukan langsung oleh admin otomatis berstatus `approved`
+- Pengeluaran user masuk ke tabel `uang_keluar` dengan status awal `pending`
+- User hanya bisa edit dan hapus data miliknya selama status masih `pending`
+- Admin bisa menghapus data pemasukan dan pengeluaran di semua status
+- Dashboard hanya menghitung transaksi dengan status `approved`
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## Modul dan Komponen Penting
 
-## Contributing
+### Controller
+- `UangMasukController` untuk pemasukan, pengajuan dana, dan approval pengajuan
+- `UangKeluarController` untuk pengeluaran dan approval pengeluaran
+- `DashboardController` untuk ringkasan dashboard
+- `AttachmentController` untuk preview dan download lampiran
+- `UserNotificationController` untuk mark as read dan redirect notifikasi
+- `MailSettingController` untuk konfigurasi mail
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Support Class
+- `FinanceNotifier` untuk mengirim notifikasi database dan email opsional
+- `MailConfiguration` untuk menerapkan konfigurasi mail dari database
+- `AttachmentUrl` untuk membuat signed URL attachment
 
-## Code of Conduct
+### View Utama
+- Shared form pemasukan: `resources/views/keuangan/uang-masuk/index.blade.php`
+- Shared form pengeluaran: `resources/views/keuangan/uang-keluar/index.blade.php`
+- Dashboard: `resources/views/dashboard/home.blade.php`
+- Header notifikasi: `resources/views/layouts/header.blade.php`
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Daftar Route Utama
 
-## Security Vulnerabilities
+### Master Data
+- `/master-data/users`
+- `/master-data/role-access`
+- `/master-data/config-mail`
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Keuangan
+- `/keuangan/pemasukan`
+- `/keuangan/pengajuan-dana`
+- `/keuangan/approval-pengajuan`
+- `/keuangan/pengeluaran`
+- `/keuangan/approval-pengeluaran`
 
-## License
+### Notifikasi dan Attachment
+- `/notifications/{notification}/visit`
+- `/attachments/preview`
+- `/attachments/download`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Kebutuhan Sistem
+
+- PHP 8.2+
+- Composer
+- MySQL
+- Node.js tidak diperlukan untuk menjalankan project ini pada setup yang sekarang
+
+Catatan: asset hasil build sudah tersedia di `public/build`, sehingga setup lokal maupun deployment Docker yang ada saat ini tidak membutuhkan `npm install` atau `vite build`.
+
+## Instalasi Lokal
+
+1. Clone repository.
+2. Install dependency Composer.
+3. Salin file environment.
+4. Generate app key.
+5. Atur koneksi database MySQL.
+6. Jalankan migration dan seeder.
+7. Jalankan aplikasi.
+
+Contoh perintah:
+
+```bash
+composer install
+copy .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+php artisan serve
+```
+
+## Konfigurasi Environment Database
+
+Contoh `.env` untuk MySQL:
+
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=keuangan-l12
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+## Akun Default dari Seeder
+
+Seeder bawaan akan membuat akun berikut:
+
+- Admin
+	- Email: `admin@example.com`
+	- Password: `password`
+- User
+	- Email: `test@example.com`
+	- Password: `password`
+
+Seeder juga mengisi:
+- menu dinamis dan role akses
+- data dummy pemasukan
+- data dummy pengeluaran
+- file dummy bukti pengeluaran
+
+## DataTables dan UI
+
+- Modul list data menggunakan server-side DataTables
+- Create, edit, dan view menggunakan halaman blade gabungan agar alur lebih ringkas
+- Header memiliki dropdown notifikasi unread
+
+## Konfigurasi Mail
+
+Config mail tersedia di menu `Master Data > Config Mail`.
+
+Field yang disediakan:
+- mailer
+- host
+- port
+- username
+- password
+- encryption
+- from address
+- from name
+
+Perilaku sistem:
+- jika konfigurasi mail tidak lengkap, email tidak dikirim
+- jika konfigurasi lengkap, opsi kirim email akan muncul pada form yang relevan
+
+## Docker
+
+Project ini sudah memiliki Dockerfile dengan karakteristik berikut:
+
+- runtime menggunakan `Nginx + PHP-FPM`
+- tidak menginstal `npm`
+- tidak menjalankan `vite build`
+- menggunakan asset yang sudah tersedia di `public/build`
+- default koneksi database diarahkan ke MySQL melalui `host.docker.internal`
+- saat container start akan menjalankan:
+	- `php artisan key:generate` jika diperlukan
+	- `php artisan optimize:clear`
+	- `php artisan storage:link`
+	- `php artisan migrate --force`
+	- `php artisan db:seed --force`
+
+Contoh build dan run:
+
+```bash
+docker build -t keuangan-l12 .
+docker run -p 8000:80 --name keuangan-app keuangan-l12
+```
+
+Contoh override env MySQL:
+
+```bash
+docker run -p 8000:80 --name keuangan-app \
+	-e DB_HOST=host.docker.internal \
+	-e DB_PORT=3306 \
+	-e DB_DATABASE=keuangan-l12 \
+	-e DB_USERNAME=root \
+	-e DB_PASSWORD= \
+	keuangan-l12
+```
+
+## Testing
+
+Untuk menjalankan test:
+
+```bash
+php artisan test
+```
+
+Test utama mencakup:
+- autentikasi
+- profile management
+- pengajuan dana
+- pengeluaran
+- approval admin
+- dashboard approved-only
+- attachment preview dan download
+- notifikasi dan config mail
+
+## Catatan Implementasi
+
+- Attachment tidak menggunakan direct URL `/storage/...`, tetapi memakai route aplikasi yang signed dan tervalidasi
+- Hak akses menu disusun dari database sehingga bisa diubah dari master role akses
+- Sistem notifikasi menggunakan database notifications Laravel
+- Pengiriman email bersifat opsional dan tidak memblokir alur utama aplikasi
+
+## Created By
+
+Created by Danang Fathurrohman
